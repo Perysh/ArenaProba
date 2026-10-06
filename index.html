@@ -23,14 +23,14 @@
   #fx {
     position: fixed;
     inset: 0;
-    z-index: 1;
+    z-index: 65;       /* above the UI panels, below the wand */
     pointer-events: none;
   }
   #wand {
     position: fixed;
     left: 0;
     top: 0;
-    z-index: 2;
+    z-index: 70;
     width: 120px;
     height: 100px;
     pointer-events: none;
@@ -64,6 +64,122 @@
     white-space: nowrap;
   }
   #hint.gone { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  /* wand-operated buttons: no real cursor, the wand tip is the pointer */
+  .wandbtn {
+    pointer-events: none !important;
+    cursor: none !important;
+    position: relative;
+    transition: transform .18s cubic-bezier(.2,1.4,.4,1), background-color .18s ease,
+                border-color .18s ease, box-shadow .18s ease, color .18s ease;
+  }
+  .wandbtn.hot {
+    transform: scale(1.09);
+    background-color: rgba(76, 45, 130, 0.85) !important;
+    border-color: rgba(216, 180, 254, 0.85) !important;
+    color: #fff !important;
+    box-shadow: 0 0 22px rgba(167, 139, 250, 0.55), inset 0 0 14px rgba(216, 180, 254, 0.22);
+  }
+  .wandbtn.press { transform: scale(0.95); }
+  .wandbtn.hot::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: inherit;
+    border: 1px solid rgba(253, 224, 71, 0.5);
+    animation: btnRing 1.1s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes btnRing {
+    0%, 100% { opacity: .35; transform: scale(1); }
+    50%      { opacity: .9;  transform: scale(1.04); }
+  }
+
+  #score {
+    position: fixed;
+    left: 50%;
+    top: 22px;
+    z-index: 3;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  #score.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #score.pop svg { animation: starPop 0.45s ease; }
+  @keyframes starPop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.7) rotate(18deg); }
+    100% { transform: scale(1); }
+  }
+
+  #lives {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    z-index: 3;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+  #lives svg { display: block; }
+
+  #gameover {
+    position: fixed;
+    left: 50%;
+    top: 46%;
+    z-index: 4;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+  }
+  #gameover.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+  #spell {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    z-index: 3;
+    pointer-events: none;
+    width: 164px;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  #spell.show { opacity: 1; transform: translateY(0); }
+  #spellBar { transition: width .12s linear, background-color .3s ease; }
+  #spell.emp {
+    border-color: rgba(253, 224, 71, 0.65);
+    box-shadow: 0 0 18px rgba(253, 224, 71, 0.35), inset 0 0 12px rgba(253, 224, 71, 0.12);
+    animation: empPulse 1.1s ease-in-out infinite;
+  }
+  #spell.emp::after {
+    content: '⭐ УСИЛЕНО';
+    display: block;
+    margin-top: 5px;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    color: #fde047;
+    font-weight: 700;
+  }
+  @keyframes empPulse {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(0) scale(1.035); }
+  }
+
+  #toast {
+    position: fixed;
+    left: 50%;
+    top: 64px;
+    z-index: 4;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, -6px) scale(0.95);
+    transition: opacity .45s ease, transform .45s cubic-bezier(.2,1.4,.4,1);
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
 </style>
 </head>
 <body>
@@ -122,7 +238,73 @@
     <path d="M12 3l1.7 4.9L18.6 9.6l-4.9 1.7L12 16.2l-1.7-4.9L5.4 9.6l4.9-1.7z"/>
     <path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>
   </svg>
-  <span>Двигай мышью — колдуй &nbsp;·&nbsp; Зажми — заряди всплеск</span>
+  <span>Колёсико — прицел &nbsp;·&nbsp; Клик — выстрел &nbsp;·&nbsp; Лови 🔥💧🌀⚡🛡⭐❤ &nbsp;·&nbsp; 5 жизней</span>
+</div>
+
+<div id="score" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[rgba(14,10,26,0.6)] backdrop-blur-md border border-white/10 text-amber-200/90 text-[11px] font-[600] tracking-[0.14em] uppercase">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2.5l2.9 6.2 6.6.8-4.9 4.6 1.3 6.6L12 17.4l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/>
+  </svg>
+  <span id="scoreN">0</span>
+</div>
+
+<div id="lives" class="flex items-center gap-1"></div>
+
+<div id="ctrls" class="fixed left-5 top-[52px] z-[5] flex items-center gap-2" style="pointer-events:none">
+  <button id="btnStart" class="wandbtn px-3.5 py-1.5 rounded-lg bg-[rgba(14,10,26,0.72)] backdrop-blur-md border border-white/15 text-white/90 text-[10px] font-[700] tracking-[0.18em] uppercase">▶ Старт</button>
+  <button id="btnPause" class="wandbtn px-3.5 py-1.5 rounded-lg bg-[rgba(14,10,26,0.72)] backdrop-blur-md border border-white/15 text-white/90 text-[10px] font-[700] tracking-[0.18em] uppercase">⏸ Пауза</button>
+</div>
+
+<div id="startScreen" class="fixed inset-0 z-[6] flex items-center justify-center" style="pointer-events:none">
+  <div class="px-10 py-8 rounded-3xl bg-[rgba(12,8,22,0.82)] backdrop-blur-xl border border-white/10 text-center shadow-2xl">
+    <div class="text-[26px] mb-1">✦ 🪄 ✦</div>
+    <div class="text-white text-[18px] font-[800] tracking-[0.22em] uppercase">Волшебная палочка</div>
+    <div class="text-white/55 text-[10px] tracking-[0.16em] uppercase mt-2 leading-relaxed">
+      Колёсико — прицел · Клик — выстрел<br>
+      Удерживай — эпический заряд<br>
+      Лови 🔥 💧 🌀 ⚡ 🛡 ⭐ ❤
+    </div>
+    <div class="text-amber-200/70 text-[9px] tracking-[0.14em] uppercase mt-3 leading-relaxed">
+      30 ★ древние · 50 ★ дементоры · 100 ★ драконы<br>
+      250 ★ фестралы · 500 ★ КОРОЛЕВА ФЕЙ
+    </div>
+    <button id="btnPlay" class="wandbtn mt-5 px-7 py-2.5 rounded-xl bg-violet-500/25 border border-violet-300/50 text-violet-100 text-[12px] font-[800] tracking-[0.2em] uppercase">▶ Играть</button>
+    <div class="text-white/35 text-[8px] tracking-[0.18em] uppercase mt-3">Наведи кончик палочки и кликни</div>
+  </div>
+</div>
+
+<div id="pauseScreen" class="fixed inset-0 z-[5] hidden items-center justify-center" style="pointer-events:none">
+  <div class="px-8 py-5 rounded-2xl bg-[rgba(12,8,22,0.8)] backdrop-blur-xl border border-white/10 text-center">
+    <div class="text-white text-[15px] font-[800] tracking-[0.25em] uppercase">⏸ Пауза</div>
+    <div class="text-white/50 text-[9px] tracking-[0.16em] uppercase mt-1.5">Коснись кнопки палочкой или нажми пробел</div>
+  </div>
+</div>
+
+<div id="bossbar" class="fixed left-1/2 top-[52px] z-[4] w-[min(520px,70vw)] -translate-x-1/2 hidden">
+  <div class="flex items-center justify-between text-[9px] font-[800] tracking-[0.2em] uppercase text-fuchsia-200/90 mb-1 px-1">
+    <span>👑 Королева фей</span><span id="bossHpTxt">100%</span>
+  </div>
+  <div class="h-[7px] w-full rounded-full bg-white/10 overflow-hidden border border-fuchsia-300/25">
+    <div id="bossHpBar" class="h-full w-full rounded-full bg-gradient-to-r from-fuchsia-400 via-pink-300 to-violet-300" style="transition:width .2s linear"></div>
+  </div>
+</div>
+
+<div id="spell" class="px-3 py-2 rounded-xl bg-[rgba(14,10,26,0.62)] backdrop-blur-md border border-white/10">
+  <div class="flex items-center gap-2">
+    <span id="spellIcon" class="text-[14px] leading-none">✦</span>
+    <span id="spellName" class="text-[10px] font-[700] tracking-[0.18em] uppercase text-white/85">Искра</span>
+  </div>
+  <div class="mt-1.5 h-[3px] w-full rounded-full bg-white/10 overflow-hidden">
+    <div id="spellBar" class="h-full w-full rounded-full bg-violet-300"></div>
+  </div>
+</div>
+
+<div id="toast" class="px-5 py-2 rounded-full bg-[rgba(14,10,26,0.72)] backdrop-blur-md border border-white/10 text-[11px] font-[700] tracking-[0.2em] uppercase text-white/90"></div>
+
+<div id="gameover" class="px-6 py-3.5 rounded-2xl bg-[rgba(14,10,26,0.78)] backdrop-blur-md border border-white/10 text-center">
+  <div class="text-rose-200/95 text-[12px] font-[700] tracking-[0.22em] uppercase">Феи объелись магии</div>
+  <div class="text-white/60 text-[10px] tracking-[0.16em] uppercase mt-1">коснись палочкой</div>
+  <button id="btnRetry" class="wandbtn mt-3 px-6 py-2 rounded-xl bg-rose-500/20 border border-rose-300/50 text-rose-100 text-[11px] font-[800] tracking-[0.2em] uppercase">↻ Заново</button>
 </div>
 
 <script>
@@ -168,6 +350,142 @@
   let speed = 0, interacted = false, hasPointer = false;
   let charge = 0, charging = false, flash = 0, kickA = 0;
   let travel = 0;
+  let wheelAngle = 0;            // aim offset (degrees) — ONLY the wheel rotates the wand
+  const BASE_ANGLE = -50;        // wand rest angle (degrees)
+  let score = 0, scorePopT = 0;
+  const bolts = [], pixies = [];
+  let pixieTimer = 3.2;          // first fairy appears soon
+  const scoreEl = document.getElementById('score');
+  const scoreN = document.getElementById('scoreN');
+  let lives = 5, biteCd = 0, shake = 0, hurtFlash = 0, gameOver = false, chargeFull = false;
+  const livesEl = document.getElementById('lives');
+  const gameoverEl = document.getElementById('gameover');
+
+  const HEART_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="#fb7185" stroke="#fda4af" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="transition:opacity .3s ease,transform .3s ease,filter .3s ease"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>';
+
+  function updateHearts() {
+    const hs = livesEl.children;
+    for (let i = 0; i < hs.length; i++) {
+      const on = i < lives;
+      hs[i].style.opacity = on ? 1 : 0.14;
+      hs[i].style.transform = on ? 'scale(1)' : 'scale(0.8)';
+      hs[i].style.filter = on ? '' : 'grayscale(1)';
+    }
+  }
+  livesEl.innerHTML = HEART_SVG.repeat(5);
+  updateHearts();
+
+  // ---- spells
+  const SPELLS = {
+    arcane:    { name: 'Искра',  icon: '✦', c: VIOLET[0],        bar: '#c4b5fd', dur: 0  },
+    fire:      { name: 'Пламя',  icon: '🔥', c: [255, 146, 56],  bar: '#fb923c', dur: 15 },
+    water:     { name: 'Поток',  icon: '💧', c: [103, 232, 249], bar: '#67e8f9', dur: 15 },
+    wind:      { name: 'Ураган', icon: '🌀', c: [110, 231, 183], bar: '#6ee7b7', dur: 17 },
+    lightning: { name: 'Молния', icon: '⚡', c: [186, 230, 253], bar: '#7dd3fc', dur: 15 },
+    shield:    { name: 'Щит',    icon: '🛡', c: [253, 224, 71],  bar: '#fde047', dur: 18 }
+  };
+  let spell = 'arcane', spellT = 0, jetT = 0;
+  let empowered = 0;              // power-up timer: upgrades every spell
+  let shieldHP = 0, shieldFlash = 0;
+  const zaps = [];                // lightning arcs to render
+  const drops = [];
+  let tornado = null;
+  const ebolts = [];
+  let running = false, paused = false, boss = null, bossSpawned = false;
+  const btnStart = document.getElementById('btnStart');
+  const btnPause = document.getElementById('btnPause');
+  const btnPlay = document.getElementById('btnPlay');
+  const startScreen = document.getElementById('startScreen');
+  const pauseScreen = document.getElementById('pauseScreen');
+  const bossbar = document.getElementById('bossbar');
+  const bossHpBar = document.getElementById('bossHpBar');
+  const bossHpTxt = document.getElementById('bossHpTxt');
+  const spellEl = document.getElementById('spell');
+  const spellIcon = document.getElementById('spellIcon');
+  const spellName = document.getElementById('spellName');
+  const spellBar = document.getElementById('spellBar');
+  const toastEl = document.getElementById('toast');
+  let toastT = 0;
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    toastT = 2.1;
+  }
+
+  function setSpell(key) {
+    spell = key;
+    const S = SPELLS[key];
+    spellT = S.dur;
+    spellIcon.textContent = S.icon;
+    spellName.textContent = S.name;
+    spellBar.style.backgroundColor = S.bar;
+    spellBar.style.width = '100%';
+    if (key === 'arcane') spellEl.classList.remove('show');
+    else spellEl.classList.add('show');
+    if (key === 'wind') {
+      tornado = { x: tipX, y: tipY, age: 0, rot: 0, r: empowered > 0 ? 210 : 150 };
+      toast('Ураган на твоей стороне!');
+    } else if (key === 'shield') {
+      shieldHP = empowered > 0 ? 6 : 3;
+      toast('Щит поднят!');
+    } else if (key !== 'arcane') {
+      toast(key === 'fire' ? 'Огненное заклинание!' :
+            key === 'water' ? 'Водяное заклинание!' : 'Молния в палочке!');
+    }
+    if (key !== 'shield') shieldHP = 0;
+  }
+
+  function setEmpowered() {
+    empowered = 20;
+    shake = Math.max(shake, 9);
+    flash = Math.min(1, flash + 0.7);
+    if (spell === 'shield') shieldHP = Math.max(shieldHP, 6);
+    if (tornado) tornado.r = 210;
+    toast('Усиление заклинаний!');
+    for (let k = 0; k < 40; k++) {
+      const a = rand(0, TAU), sp = rand(80, 300);
+      emitDust(tipX, tipY, Math.cos(a) * sp, Math.sin(a) * sp, rand(1, 2.6), rand(0.4, 1), GOLD[0]);
+    }
+    rings.push({ x: tipX, y: tipY, age: 0, life: 0.7, maxR: 200, c: GOLD[0], w: 5 });
+  }
+
+  // ---- drops
+  function maybeDrop(x, y) {
+    if (Math.random() > 0.32) return;
+    const pool = ['fire', 'water', 'wind', 'lightning', 'shield', 'power'];
+    if (lives < 5) pool.push('heart', 'heart');
+    const type = pick(pool);
+    const S = type === 'heart' ? { icon: '❤', c: [251, 113, 133] }
+            : type === 'power' ? { icon: '⭐', c: GOLD[0] }
+            : SPELLS[type];
+    drops.push({
+      x, y, vx: rand(-40, 40), vy: rand(-80, -30),
+      type, icon: S.icon, c: S.c, age: 0, life: 11, seed: rand(0, TAU)
+    });
+  }
+
+  function takeDrop(d) {
+    flash = Math.min(1, flash + 0.5);
+    rings.push({ x: d.x, y: d.y, age: 0, life: 0.6, maxR: 110, c: d.c, w: 4 });
+    for (let k = 0; k < 24; k++) {
+      const a = rand(0, TAU), sp = rand(60, 240);
+      emitDust(d.x, d.y, Math.cos(a) * sp, Math.sin(a) * sp, rand(1, 2.4), rand(0.4, 1), d.c);
+    }
+    if (d.type === 'heart') {
+      lives = Math.min(5, lives + 1);
+      updateHearts();
+      toast('+1 жизнь');
+    } else if (d.type === 'power') setEmpowered();
+    else setSpell(d.type);
+  }
+
+  // distance from point to segment (wand bite test)
+  function segDist(px, py, ax, ay, bx, by) {
+    const abx = bx - ax, aby = by - ay;
+    const tt = clamp(((px - ax) * abx + (py - ay) * aby) / (abx * abx + aby * aby || 1), 0, 1);
+    return Math.hypot(px - (ax + abx * tt), py - (ay + aby * tt));
+  }
 
   // ---- particles
   const dust = [], stars = [], rings = [], seals = [], orbs = [], trail = [];
@@ -224,6 +542,331 @@
       emitDust(ox, oy, Math.cos(a) * sp, Math.sin(a) * sp, rand(1.2, 3), rand(0.6, 1.2), o.c);
     }
     orbs.length = 0;
+
+    // shockblast damages nearby pixies
+    const blastR = 60 + 150 * P2;
+    for (let i = pixies.length - 1; i >= 0; i--) {
+      const f = pixies[i];
+      if (Math.hypot(f.x - x, f.y - y) < blastR + f.r) damagePixie(i, 1 + P2);
+    }
+  }
+
+  // ---- pixies (shootable fairies)
+  function tier() {
+    return score < 10 ? 0 : score < 20 ? 1 : score < 30 ? 2 : score < 50 ? 3
+         : score < 100 ? 4 : score < 250 ? 5 : score < 500 ? 6 : 7;
+  }
+  function maxPixies() { return [3, 5, 7, 8, 9, 10, 11, 8][tier()]; }
+  function spawnDelay() {
+    const T2 = tier();
+    return [rand(4.2, 7.5), rand(2.6, 4.6), rand(1.9, 3.3), rand(1.4, 2.6),
+            rand(1.2, 2.2), rand(1.0, 1.9), rand(0.9, 1.7), rand(1.6, 2.8)][T2];
+  }
+
+  function spawnQueen() {
+    bossSpawned = true;
+    const TY = PIXIE_TYPES.queen;
+    boss = {
+      x: W / 2, y: -90, kind: 'queen',
+      vx: 0, vy: 60, r: TY.r, c: TY.colors[0], hp: TY.hp, maxHp: TY.hp, hurt: 0,
+      flapF: 7, phase: 0, seed: rand(0, TAU), spd: 64, age: 0, tw: 0, flee: 0,
+      atk: 2.5, summon: 5
+    };
+    pixies.push(boss);
+    bossbar.classList.remove('hidden');
+    toast('👑 КОРОЛЕВА ФЕЙ ПРОБУДИЛАСЬ');
+    shake = 30; hurtFlash = 1; flash = 1;
+  }
+
+  const PIXIE_TYPES = {
+    common:   { hp: 1,  r: 15, spd: [70, 115],  colors: [CYAN[1], PINK[0], GOLD[0], VIOLET[0]] },
+    thorn:    { hp: 3,  r: 20, spd: [85, 120],  colors: [[251, 113, 133], [248, 113, 113]] },
+    elder:    { hp: 5,  r: 24, spd: [55, 80],   colors: [[167, 139, 250], [129, 140, 248]] },
+    dementor: { hp: 8,  r: 34, spd: [60, 85],   colors: [[120, 113, 160], [88, 84, 120]] },
+    dragon:   { hp: 16, r: 46, spd: [70, 95],   colors: [[248, 113, 113], [251, 146, 60]] },
+    thestral: { hp: 24, r: 52, spd: [130, 175], colors: [[180, 190, 210], [140, 150, 180]] },
+    queen:    { hp: 320, r: 74, spd: [55, 70],  colors: [[244, 114, 182], [232, 121, 249]] }
+  };
+
+  function spawnPixie() {
+    const side = (Math.random() * 4) | 0;
+    const m = 50;
+    let x, y;
+    if (side === 0)      { x = -m;       y = rand(0, H); }
+    else if (side === 1) { x = W + m;    y = rand(0, H); }
+    else if (side === 2) { x = rand(0, W); y = -m; }
+    else                 { x = rand(0, W); y = H + m; }
+    const a = Math.atan2(H / 2 - y, W / 2 - x) + rand(-0.5, 0.5);
+    let kind = 'common';
+    const r = Math.random();
+    if (score >= 250) {
+      kind = r < 0.16 ? 'thestral' : r < 0.3 ? 'dragon' : r < 0.46 ? 'dementor'
+           : r < 0.64 ? 'thorn' : r < 0.8 ? 'elder' : 'common';
+    } else if (score >= 100) {
+      kind = r < 0.14 ? 'dragon' : r < 0.34 ? 'dementor' : r < 0.55 ? 'thorn' : r < 0.72 ? 'elder' : 'common';
+    } else if (score >= 50) {
+      kind = r < 0.22 ? 'dementor' : r < 0.46 ? 'thorn' : r < 0.64 ? 'elder' : 'common';
+    } else if (score >= 30) {
+      kind = r < 0.3 ? 'thorn' : r < 0.46 ? 'elder' : 'common';
+    }
+    const TY = PIXIE_TYPES[kind];
+    pixies.push({
+      x, y, kind,
+      vx: Math.cos(a) * 80, vy: Math.sin(a) * 80,
+      r: TY.r, c: pick(TY.colors), hp: TY.hp, maxHp: TY.hp, hurt: 0,
+      flapF: rand(13, 19), phase: rand(0, TAU),
+      seed: rand(0, TAU), spd: rand(TY.spd[0], TY.spd[1]) * (1 + tier() * 0.07),
+      age: 0, tw: 0, flee: 0
+    });
+    scoreEl.classList.add('show');
+  }
+
+  // damage a pixie; returns true if it died
+  function damagePixie(i, dmg, cc) {
+    const f = pixies[i];
+    f.hp -= dmg;
+    f.hurt = Math.min(1, f.hurt + 0.6);
+    const col = cc || f.c;
+    for (let k = 0; k < 8; k++) {
+      const a = rand(0, TAU), sp = rand(40, 170);
+      emitDust(f.x, f.y, Math.cos(a) * sp, Math.sin(a) * sp, rand(0.8, 2), rand(0.25, 0.6), col);
+    }
+    if (f.hp > 0) {
+      rings.push({ x: f.x, y: f.y, age: 0, life: 0.32, maxR: f.r * 3, c: col, w: 2.5 });
+      return false;
+    }
+    killPixie(i, col);
+    return true;
+  }
+
+  function killPixie(i, cc) {
+    const f = pixies[i];
+    flash = Math.min(1, flash + 0.45);
+    rings.push({ x: f.x, y: f.y, age: 0, life: 0.7, maxR: 90 + f.maxHp * 22, c: cc || f.c, w: 5 });
+    const n = Math.round((34 + f.maxHp * 8) * reduceMotion + 10);
+    for (let k = 0; k < n; k++) {
+      const a = rand(0, TAU), sp = rand(60, 290);
+      emitDust(f.x, f.y, Math.cos(a) * sp, Math.sin(a) * sp - 30,
+        rand(1, 2.6), rand(0.5, 1.3), Math.random() < 0.5 ? f.c : pick(PALETTE));
+    }
+    for (let k = 0; k < 7; k++)
+      emitStar(f.x + rand(-6, 6), f.y + rand(-6, 6), rand(3, 8), rand(-60, 60), rand(-80, 20), f.c);
+    spawnSeal(f.x, f.y, 0.6);
+    maybeDrop(f.x, f.y);
+    pixies.splice(i, 1);
+
+    const before = tier();
+    score += f.kind === 'queen' ? 100 : f.kind === 'thestral' ? 12 : f.kind === 'dragon' ? 8
+           : f.kind === 'dementor' ? 5 : f.kind === 'elder' ? 3 : f.kind === 'thorn' ? 2 : 1;
+    if (f.kind === 'queen') {
+      boss = null; bossbar.classList.add('hidden');
+      toast('КОРОЛЕВА ПОВЕРЖЕНА! 👑');
+      shake = 30; flash = 1;
+      for (let k = 0; k < 10; k++)
+        setTimeout(() => explode(f.x + rand(-140, 140), f.y + rand(-120, 120), 150, 0, pick(PALETTE)), k * 110);
+    }
+    scoreN.textContent = score;
+    scoreEl.classList.remove('pop');
+    void scoreEl.offsetWidth;
+    scoreEl.classList.add('pop');
+    if (tier() !== before) {
+      const msgs = ['', 'Волна 2 — фей больше!', 'Волна 3 — их рой!', 'Волна 4 — древние феи!',
+        'ДЕМЕНТОРЫ ПРИБЛИЖАЮТСЯ', 'ДРАКОНЫ В НЕБЕ!', 'ФЕСТРАЛЫ ВЫШЛИ НА ОХОТУ',
+        '👑 КОРОЛЕВА ФЕЙ БЛИЗКО...'];
+      toast(msgs[tier()] || 'Новая волна!');
+      if (tier() >= 4) { shake = 22; hurtFlash = 0.8; }
+    }
+  }
+
+  // AoE damage helper (fire explosions, tornado, blasts)
+  function areaDamage(x, y, R, dmg, cc) {
+    for (let i = pixies.length - 1; i >= 0; i--) {
+      const f = pixies[i];
+      const d = Math.hypot(f.x - x, f.y - y);
+      if (d < R + f.r) {
+        const a = Math.atan2(f.y - y, f.x - x);
+        f.vx += Math.cos(a) * 240; f.vy += Math.sin(a) * 240;
+        damagePixie(i, dmg, cc);
+      }
+    }
+  }
+
+  function explode(x, y, R, dmg, c) {
+    flash = Math.min(1, flash + 0.5);
+    shake = Math.max(shake, 7);
+    rings.push({ x, y, age: 0, life: 0.55, maxR: R, c, w: 6 });
+    rings.push({ x, y, age: 0, life: 0.4, maxR: R * 0.6, c: GOLD[0], w: 3 });
+    for (let k = 0; k < 40 * reduceMotion; k++) {
+      const a = rand(0, TAU), sp = rand(60, 330);
+      emitDust(x, y, Math.cos(a) * sp, Math.sin(a) * sp - 60,
+        rand(1.2, 3), rand(0.4, 1.1), Math.random() < 0.6 ? c : GOLD[0]);
+    }
+    areaDamage(x, y, R, dmg, c);
+  }
+
+  function bitePixie(f) {
+    // shield absorbs the bite instead of a life
+    if (shieldHP > 0) {
+      shieldHP--;
+      shieldFlash = 1;
+      biteCd = 0.5;
+      shake = Math.max(shake, 8);
+      const sc = SPELLS.shield.c;
+      rings.push({ x: f.x, y: f.y, age: 0, life: 0.45, maxR: 90, c: sc, w: 4 });
+      for (let k = 0; k < 18; k++) {
+        const a = rand(0, TAU), sp = rand(60, 240);
+        emitDust(f.x, f.y, Math.cos(a) * sp, Math.sin(a) * sp, rand(0.9, 2.2), rand(0.3, 0.7), sc);
+      }
+      const ab = Math.atan2(f.y - tipY, f.x - tipX);
+      f.vx = Math.cos(ab) * 650; f.vy = Math.sin(ab) * 650;
+      f.flee = rand(1.2, 2);
+      const idx = pixies.indexOf(f);
+      if (idx >= 0) damagePixie(idx, 2, sc);
+      if (shieldHP <= 0) toast('Щит разбит!');
+      return;
+    }
+    lives = Math.max(0, lives - 1);
+    updateHearts();
+    biteCd = 1.15;
+    hurtFlash = 1; shake = 13;
+    rings.push({ x: f.x, y: f.y, age: 0, life: 0.5, maxR: 70, c: [251, 113, 133], w: 4.5 });
+    for (let k = 0; k < 16; k++) {
+      const a = rand(0, TAU), sp = rand(50, 210);
+      emitDust(f.x, f.y, Math.cos(a) * sp, Math.sin(a) * sp,
+        rand(0.9, 2.2), rand(0.35, 0.8), [251, 113, 133]);
+    }
+    const a = Math.atan2(f.y - tipY, f.x - tipX);
+    f.vx = Math.cos(a) * 520; f.vy = Math.sin(a) * 520;
+    f.flee = rand(1.6, 2.4);
+    if (lives <= 0) doGameOver();
+  }
+
+  function doGameOver() {
+    gameOver = true;
+    charging = false; orbs.length = 0;
+    gameoverEl.classList.add('show');
+    for (const f of pixies) f.flee = rand(2, 4);
+    shake = 18; hurtFlash = 1;
+  }
+
+  // ---- wand-operated buttons: the tip is the pointer
+  let hotBtn = null, hotGlowT = 0;
+
+  function wandButtons() {
+    const list = [];
+    for (const el of document.querySelectorAll('.wandbtn')) {
+      if (el.offsetWidth === 0 && el.offsetHeight === 0) continue;      // not laid out
+      const ss = el.closest('#startScreen');
+      if (ss && ss.style.display === 'none') continue;                  // title screen gone
+      const go = el.closest('#gameover');
+      if (go && !go.classList.contains('show')) continue;               // defeat panel hidden
+      const ps = el.closest('#pauseScreen');
+      if (ps && ps.classList.contains('hidden')) continue;              // pause panel hidden
+      list.push(el);
+    }
+    return list;
+  }
+
+  function updateHotButton() {
+    let found = null;
+    for (const el of wandButtons()) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0) continue;
+      const pad = 8;
+      if (tipX >= r.left - pad && tipX <= r.right + pad &&
+          tipY >= r.top - pad && tipY <= r.bottom + pad) { found = el; break; }
+    }
+    if (found !== hotBtn) {
+      if (hotBtn) hotBtn.classList.remove('hot');
+      hotBtn = found;
+      if (hotBtn) {
+        hotBtn.classList.add('hot');
+        const r = hotBtn.getBoundingClientRect();
+        for (let k = 0; k < 14; k++)
+          emitDust(rand(r.left, r.right), rand(r.top, r.bottom),
+            rand(-40, 40), rand(-60, 10), rand(0.8, 2), rand(0.3, 0.7), GOLD[0]);
+      }
+    }
+    // sparkle on the hovered button
+    if (hotBtn) {
+      hotGlowT -= 1;
+      if (hotGlowT <= 0) {
+        hotGlowT = 3;
+        const r = hotBtn.getBoundingClientRect();
+        emitStar(rand(r.left, r.right), rand(r.top, r.bottom), rand(1.6, 3.4), 0, 0, GOLD[0]);
+      }
+    }
+  }
+
+  function zapButton(el) {
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    el.classList.add('press');
+    setTimeout(() => el.classList.remove('press'), 130);
+    flash = Math.min(1, flash + 0.5);
+    rings.push({ x: cx, y: cy, age: 0, life: 0.5, maxR: Math.max(r.width, 90), c: GOLD[0], w: 3.5 });
+    zaps.push({ pts: [[tipX, tipY], [cx, cy]], age: 0, life: 0.22, c: GOLD[0] });
+    for (let k = 0; k < 26; k++) {
+      const a = rand(0, TAU), sp = rand(50, 220);
+      emitDust(cx, cy, Math.cos(a) * sp, Math.sin(a) * sp, rand(0.9, 2.3), rand(0.3, 0.8),
+        Math.random() < 0.5 ? GOLD[0] : VIOLET[0]);
+    }
+    for (let k = 0; k < 5; k++) emitStar(cx + rand(-r.width / 2, r.width / 2), cy + rand(-12, 12), rand(3, 7));
+  }
+
+  function setPaused(v) {
+    if (!running) return;
+    paused = v;
+    pauseScreen.classList.toggle('hidden', !paused);
+    pauseScreen.classList.toggle('flex', paused);
+    btnPause.innerHTML = paused ? '▶ Продолжить' : '⏸ Пауза';
+    if (paused) { charging = false; orbs.length = 0; }
+  }
+
+  function startGame() {
+    startScreen.style.display = 'none';
+    running = true;
+    setPaused(false);
+    restartGame();
+    btnStart.innerHTML = '↻ Заново';
+  }
+
+  // actions are triggered by the wand tip, not by the OS cursor
+  const btnRetry = document.getElementById('btnRetry');
+  const BTN_ACTION = new Map([
+    [btnPlay,  () => startGame()],
+    [btnStart, () => startGame()],
+    [btnRetry, () => startGame()],
+    [btnPause, () => setPaused(!paused)]
+  ]);
+
+  function tryWandPress() {
+    if (!hotBtn) return false;
+    const act = BTN_ACTION.get(hotBtn);
+    zapButton(hotBtn);
+    if (act) act();
+    hotBtn.classList.remove('hot');
+    hotBtn = null;
+    return true;
+  }
+  addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); running ? setPaused(!paused) : startGame(); }
+    if (e.code === 'KeyR') startGame();
+  });
+
+  function restartGame() {
+    gameOver = false;
+    gameoverEl.classList.remove('show');
+    lives = 5; updateHearts();
+    score = 0; scoreN.textContent = '0';
+    pixies.length = 0; bolts.length = 0; drops.length = 0;
+    ebolts.length = 0; zaps.length = 0;
+    boss = null; bossSpawned = false; bossbar.classList.add('hidden');
+    pixieTimer = 2.2; biteCd = 1; charge = 0;
+    empowered = 0; shieldHP = 0; spellEl.classList.remove('emp');
+    tornado = null; setSpell('arcane');
+    toastEl.classList.remove('show'); toastT = 0;
+    spawnBurst(P.x, P.y, 0.35);
   }
 
   // ---- input
@@ -236,14 +879,186 @@
 
   addEventListener('pointerdown', e => {
     T.x = e.clientX; T.y = e.clientY;
-    charging = true; charge = 0;
     if (!interacted) { interacted = true; hintEl.classList.add('gone'); }
+    if (tryWandPress()) return;              // the wand tapped a button
+    if (!running || paused) return;
+    if (gameOver) { restartGame(); return; }
+    charging = true; charge = 0;
   });
+
+  // ---- lightning: chains between nearby pixies
+  function castLightning(power) {
+    const P2 = clamp(power, 0.12, 1);
+    const aim = (BASE_ANGLE + wheelAngle) * Math.PI / 180;
+    const EMP = empowered > 0;
+    const c = SPELLS.lightning.c;
+    const RANGE = EMP ? 620 : 460, CHAIN = EMP ? 5 : 3, CHAIN_R = EMP ? 300 : 210;
+    const cA = Math.cos(aim), sA = Math.sin(aim);
+    // find first target in a cone, else strike into the air
+    let idx = -1, best = 1e9;
+    for (let i = 0; i < pixies.length; i++) {
+      const f = pixies[i];
+      const dx = f.x - tipX, dy = f.y - tipY, d = Math.hypot(dx, dy) || 1;
+      if (d > RANGE) continue;
+      if ((dx * cA + dy * sA) / d < 0.55) continue;
+      if (d < best) { best = d; idx = i; }
+    }
+    shake = Math.max(shake, 5); flash = Math.min(1, flash + 0.45);
+    if (idx < 0) {
+      zaps.push({ pts: [[tipX, tipY], [tipX + cA * RANGE, tipY + sA * RANGE]], age: 0, life: 0.3, c });
+      return;
+    }
+    const pts = [[tipX, tipY]];
+    const used = new Set();
+    let cx = tipX, cy = tipY, cur = idx;
+    const dmg = (EMP ? 5 : 3) + P2 * 2;
+    for (let hop = 0; hop < CHAIN && cur >= 0; hop++) {
+      const f = pixies[cur];
+      pts.push([f.x, f.y]);
+      cx = f.x; cy = f.y;
+      used.add(f);
+      for (let k = 0; k < 10; k++) {
+        const a = rand(0, TAU), sp = rand(60, 260);
+        emitDust(f.x, f.y, Math.cos(a) * sp, Math.sin(a) * sp, rand(0.8, 2), rand(0.2, 0.5), c);
+      }
+      damagePixie(pixies.indexOf(f), dmg, c);
+      let nxt = -1, nb = 1e9;
+      for (let i = 0; i < pixies.length; i++) {
+        const g = pixies[i];
+        if (used.has(g)) continue;
+        const d = Math.hypot(g.x - cx, g.y - cy);
+        if (d < CHAIN_R && d < nb) { nb = d; nxt = i; }
+      }
+      cur = nxt;
+    }
+    zaps.push({ pts, age: 0, life: 0.32, c });
+  }
+
+  function fireBolt(power) {
+    const P2 = clamp(power, 0.12, 1);
+    const aim = (BASE_ANGLE + wheelAngle) * Math.PI / 180;
+    const EMP = empowered > 0;
+    const MUL = EMP ? 1.7 : 1;
+
+    if (spell === 'lightning') { castLightning(power); return; }
+
+    if (spell === 'shield') {
+      // shield spell shoots golden warding shards
+      const n = EMP ? 5 : 3;
+      for (let i = 0; i < n; i++) {
+        const a = aim + (i - (n - 1) / 2) * 0.16;
+        const sp = 760 + 420 * P2;
+        bolts.push({
+          x: tipX + Math.cos(a) * 10, y: tipY + Math.sin(a) * 10,
+          vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+          r: 9 + 8 * P2, p: P2, age: 0, life: 1.3, kind: 'arcane',
+          dmg: (1.4 + P2) * MUL, c: SPELLS.shield.c
+        });
+      }
+      return;
+    }
+
+    if (spell === 'fire') {
+      const n = EMP ? 3 : 1;
+      for (let i = 0; i < n; i++) {
+        const a = aim + (i - (n - 1) / 2) * 0.2;
+        bolts.push({
+          x: tipX + Math.cos(a) * 10, y: tipY + Math.sin(a) * 10,
+          vx: Math.cos(a) * (560 + 300 * P2), vy: Math.sin(a) * (560 + 300 * P2),
+          r: (13 + 14 * P2) * (EMP ? 1.25 : 1), p: P2, age: 0, life: 1.6, kind: 'fire',
+          dmg: (2 + 2 * P2) * MUL, boom: (95 + 95 * P2) * (EMP ? 1.4 : 1), c: SPELLS.fire.c
+        });
+      }
+      return;
+    }
+    if (spell === 'wind') {
+      const n = EMP ? 9 : 5;
+      for (let i = 0; i < n; i++) {
+        const a = aim + (i - 2) * 0.1 + rand(-0.04, 0.04);
+        const sp = 820 + 420 * P2;
+        bolts.push({
+          x: tipX + Math.cos(a) * 10, y: tipY + Math.sin(a) * 10,
+          vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+          r: 7 + 6 * P2, p: P2, age: 0, life: 0.9, kind: 'wind',
+          dmg: 1, push: 420, c: SPELLS.wind.c
+        });
+      }
+      return;
+    }
+    const n = EMP ? (P2 > 0.8 ? 5 : 3) : (P2 > 0.8 ? 3 : 1);
+    for (let i = 0; i < n; i++) {
+      const off = n === 1 ? 0 : (i - (n - 1) / 2) * 0.15;
+      const a = aim + off;
+      const sp = 700 + 520 * P2;
+      bolts.push({
+        x: tipX + Math.cos(a) * 10, y: tipY + Math.sin(a) * 10,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        r: (8 + 12 * P2) * (EMP ? 1.2 : 1), p: P2, age: 0, life: 1.5, kind: 'arcane',
+        dmg: (1 + P2) * MUL,
+        c: P2 > 0.55 ? pick([GOLD[0], VIOLET[0], PINK[1], CYAN[1]]) : VIOLET[0]
+      });
+    }
+  }
+
+  // water: a continuous jet while the button is held
+  function waterJet(dt, t) {
+    const aim = (BASE_ANGLE + wheelAngle) * Math.PI / 180;
+    const cA = Math.cos(aim), sA = Math.sin(aim);
+    const EMP = empowered > 0;
+    const RANGE = EMP ? 620 : 430, SPREAD = EMP ? 0.44 : 0.3;
+    const c = SPELLS.water.c;
+    for (let i = 0; i < (EMP ? 12 : 7) * reduceMotion; i++) {
+      const a = aim + rand(-SPREAD, SPREAD) * 0.8;
+      const sp = rand(420, 900);
+      emitDust(tipX + cA * 8, tipY + sA * 8,
+        Math.cos(a) * sp, Math.sin(a) * sp + rand(-40, 60),
+        rand(1.2, 3.4), rand(0.25, 0.55),
+        Math.random() < 0.3 ? WHITE[0] : c);
+    }
+    glow(tipX + cA * 18, tipY + sA * 18, 34, WHITE[0], c, 0.3);
+    for (let i = pixies.length - 1; i >= 0; i--) {
+      const f = pixies[i];
+      const dx = f.x - tipX, dy = f.y - tipY;
+      const d = Math.hypot(dx, dy);
+      if (d > RANGE || d < 1) continue;
+      const dot = (dx * cA + dy * sA) / d;
+      if (dot < Math.cos(SPREAD + 0.18)) continue;
+      f.vx += cA * (EMP ? 1500 : 900) * dt; f.vy += sA * (EMP ? 1500 : 900) * dt;
+      damagePixie(i, (EMP ? 5 : 2.6) * dt, c);
+    }
+    kickA += (Math.sin(t * 40) * 1.2 - kickA) * 0.3;
+  }
 
   function release(power) {
     if (!charging) return;
+    const full = charge > 0.9;
     charging = false;
+    if (spell === 'water') { chargeFull = false; return; }
+    fireBolt(power);
     spawnBurst(tipX, tipY, power);
+    // fully charged = epic overcharged blast
+    if (full) {
+      const c = SPELLS[spell].c;
+      shake = Math.max(shake, 20); flash = 1;
+      spawnSeal(tipX, tipY, 1);
+      rings.push({ x: tipX, y: tipY, age: 0, life: 0.9, maxR: 420, c, w: 8 });
+      rings.push({ x: tipX, y: tipY, age: 0, life: 0.7, maxR: 300, c: GOLD[0], w: 5 });
+      rings.push({ x: tipX, y: tipY, age: 0, life: 1.1, maxR: 560, c: WHITE[0], w: 3 });
+      for (let k = 0; k < 90 * reduceMotion; k++) {
+        const a = rand(0, TAU), sp = rand(150, 620);
+        emitDust(tipX, tipY, Math.cos(a) * sp, Math.sin(a) * sp,
+          rand(1.2, 3.4), rand(0.5, 1.5), Math.random() < 0.5 ? c : pick(PALETTE));
+      }
+      for (let k = 0; k < 14; k++) emitStar(tipX, tipY, rand(5, 13), rand(-260, 260), rand(-260, 260), c);
+      const aim = (BASE_ANGLE + wheelAngle) * Math.PI / 180;
+      for (let k = 0; k < 8; k++) {
+        const a = aim + rand(-0.5, 0.5);
+        zaps.push({ pts: [[tipX, tipY], [tipX + Math.cos(a) * 520, tipY + Math.sin(a) * 520]],
+          age: 0, life: 0.3, c: k % 2 ? GOLD[0] : c });
+      }
+      areaDamage(tipX, tipY, 230, empowered > 0 ? 7 : 4, c);
+    }
+    chargeFull = false;
   }
   addEventListener('pointerup', () => release(0.18 + charge * 0.85));
   addEventListener('pointercancel', () => { charging = false; orbs.length = 0; });
@@ -251,6 +1066,16 @@
   document.addEventListener('pointerleave', () => { hasPointer = false; wandEl.classList.add('hidden-wand'); });
   document.addEventListener('pointerenter', () => { wandEl.classList.remove('hidden-wand'); });
   addEventListener('contextmenu', e => e.preventDefault());
+
+  // wheel rotates the wand (aiming)
+  addEventListener('wheel', e => {
+    e.preventDefault();
+    wheelAngle -= e.deltaY * 0.22;
+    kickA += clamp(-e.deltaY * 0.018, -6, 6);
+    for (let i = 0; i < 3; i++)
+      emitDust(tipX + rand(-5, 5), tipY + rand(-5, 5),
+        rand(-45, 45), rand(-55, 5), rand(0.8, 2), rand(0.25, 0.7), pick(PALETTE));
+  }, { passive: false });
 
   // ---- drawing helpers
   let tipX = W / 2 + 60, tipY = H / 2 - 60;
@@ -323,6 +1148,356 @@
     ctx.restore();
   }
 
+  function drawPixie(f, t) {
+    const flap = Math.sin(t * f.flapF * (1 + Math.min(1, Math.hypot(f.vx, f.vy) / 240) * 0.9) + f.phase);
+    const face = Math.atan2(f.vy, f.vx);
+    const hurtC = f.hurt > 0.05 ? [255, 255, 255] : f.c;
+    const sc = f.r / 15;
+
+    if (f.kind === 'queen') {
+      const fl = Math.sin(t * 4 + f.phase);
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      // vast shimmering wings
+      for (const s of [-1, 1]) {
+        for (let w = 0; w < 2; w++) {
+          ctx.save();
+          ctx.rotate(s * (0.45 + w * 0.5 + fl * 0.22));
+          const wg = ctx.createLinearGradient(0, 0, s * f.r * 0.4, -f.r * 2.4);
+          wg.addColorStop(0, 'rgba(244,114,182,0.5)');
+          wg.addColorStop(1, 'rgba(216,180,254,0.05)');
+          ctx.fillStyle = wg;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.quadraticCurveTo(s * f.r * 1.5, -f.r * 1.5, s * f.r * 0.5, -f.r * (2.4 - w * 0.6));
+          ctx.quadraticCurveTo(s * f.r * 0.1, -f.r * 1.1, 0, 0);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      // halo of orbiting runes
+      ctx.strokeStyle = rgba([232, 121, 249], 0.5);
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(0, 0, f.r * 1.7, 0, TAU); ctx.stroke();
+      for (let i = 0; i < 8; i++) {
+        const a = t * 1.2 + i * TAU / 8;
+        star4(Math.cos(a) * f.r * 1.7, Math.sin(a) * f.r * 1.7, 5, t * 4, PINK[0], 0.8);
+      }
+      ctx.restore();
+      // body + crown
+      glow(f.x, f.y, f.r * 2.6, f.hurt > 0.05 ? WHITE[0] : PINK[0], [232, 121, 249], 0.5);
+      glow(f.x, f.y, f.r * 1.0, WHITE[0], PINK[0], 0.95);
+      ctx.save();
+      ctx.translate(f.x, f.y - f.r * 0.95);
+      ctx.fillStyle = rgba(GOLD[0], 0.95);
+      ctx.beginPath();
+      ctx.moveTo(-f.r * 0.42, 0);
+      for (let i = 0; i < 4; i++) {
+        const bx = -f.r * 0.42 + i * f.r * 0.28;
+        ctx.lineTo(bx + f.r * 0.14, -f.r * 0.34);
+        ctx.lineTo(bx + f.r * 0.28, 0);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      for (let i = 0; i < 3; i++)
+        star4(f.x + rand(-f.r, f.r), f.y + rand(-f.r, f.r), rand(2, 5), t * 2, WHITE[0], 0.6);
+    } else if (f.kind === 'thestral') {
+      const flapT = Math.sin(t * 4.4 + f.phase);
+      const faceT = Math.atan2(f.vy, f.vx);
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(faceT);
+      ctx.globalCompositeOperation = 'source-over';
+      // skeletal bat wings
+      for (const s of [-1, 1]) {
+        ctx.save();
+        ctx.rotate(s * (0.42 + flapT * 0.5));
+        ctx.fillStyle = 'rgba(28,30,40,0.8)';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-f.r * 0.5, s * f.r * 1.3, f.r * 0.1, s * f.r * 1.95);
+        ctx.quadraticCurveTo(f.r * 0.45, s * f.r * 1.0, f.r * 0.25, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(190,196,214,0.55)';
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(f.r * 0.1, 0);
+          ctx.lineTo(f.r * (0.05 + i * 0.1), s * f.r * (1.9 - i * 0.35));
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      // bony body, neck, head
+      ctx.fillStyle = 'rgba(32,34,44,0.95)';
+      ctx.beginPath(); ctx.ellipse(0, 0, f.r * 0.62, f.r * 0.3, 0, 0, TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(200,206,222,0.45)';
+      ctx.lineWidth = 1.1;
+      for (let i = -2; i <= 2; i++) {           // ribs
+        ctx.beginPath();
+        ctx.ellipse(i * f.r * 0.17, 0, f.r * 0.07, f.r * 0.27, 0, 0, TAU);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(34,36,46,0.95)';
+      ctx.lineWidth = f.r * 0.17;
+      ctx.beginPath();
+      ctx.moveTo(f.r * 0.5, -f.r * 0.05);
+      ctx.quadraticCurveTo(f.r * 0.85, -f.r * 0.35, f.r * 1.0, -f.r * 0.5);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(38,40,52,0.98)';
+      ctx.beginPath();
+      ctx.ellipse(f.r * 1.08, -f.r * 0.54, f.r * 0.22, f.r * 0.13, -0.35, 0, TAU);
+      ctx.fill();
+      // tail
+      ctx.strokeStyle = 'rgba(32,34,44,0.9)';
+      ctx.lineWidth = f.r * 0.1;
+      ctx.beginPath();
+      ctx.moveTo(-f.r * 0.6, 0);
+      ctx.quadraticCurveTo(-f.r * 1.1, Math.sin(t * 6) * f.r * 0.3, -f.r * 1.4, Math.sin(t * 6) * f.r * 0.5);
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'lighter';
+      // pale glowing eye
+      ctx.fillStyle = rgba(f.hurt > 0.05 ? [255, 255, 255] : [226, 232, 240], 0.95);
+      ctx.beginPath(); ctx.arc(f.r * 1.14, -f.r * 0.58, f.r * 0.06, 0, TAU); ctx.fill();
+      ctx.restore();
+      glow(f.x, f.y, f.r * 1.8, [190, 200, 220], [90, 100, 130], 0.22);
+    } else if (f.kind === 'dementor') {
+      // floating ragged cloak
+      const sw = Math.sin(t * 2.2 + f.seed);
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(Math.sin(t * 1.4 + f.seed) * 0.12 + (f.vx > 0 ? 0.08 : -0.08));
+      ctx.globalCompositeOperation = 'source-over';
+      const g = ctx.createLinearGradient(0, -f.r, 0, f.r * 1.9);
+      g.addColorStop(0, 'rgba(40,36,60,0.92)');
+      g.addColorStop(0.6, 'rgba(22,20,34,0.85)');
+      g.addColorStop(1, 'rgba(16,14,26,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(0, -f.r * 1.1);
+      ctx.quadraticCurveTo(f.r * 1.05, -f.r * 0.7, f.r * 0.8, f.r * 0.5);
+      // ragged hem
+      for (let i = 0; i < 5; i++) {
+        const px = f.r * 0.8 - (i + 0.5) * (f.r * 1.6 / 5);
+        const py = f.r * (1.5 + Math.sin(t * 4 + i + f.seed) * 0.4);
+        ctx.quadraticCurveTo(px + f.r * 0.14, py, px - f.r * 0.16, f.r * 0.55);
+      }
+      ctx.quadraticCurveTo(-f.r * 1.05, -f.r * 0.7, 0, -f.r * 1.1);
+      ctx.fill();
+      // hood opening + eyes
+      ctx.fillStyle = 'rgba(8,6,14,0.95)';
+      ctx.beginPath();
+      ctx.ellipse(0, -f.r * 0.45, f.r * 0.5, f.r * 0.62, 0, 0, TAU);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'lighter';
+      for (const s of [-1, 1]) {
+        ctx.fillStyle = rgba(f.hurt > 0.05 ? [255, 255, 255] : [167, 139, 250], 0.85 + sw * 0.1);
+        ctx.beginPath();
+        ctx.ellipse(s * f.r * 0.19, -f.r * 0.5, f.r * 0.09, f.r * 0.13, 0, 0, TAU);
+        ctx.fill();
+      }
+      // grasping hand
+      ctx.strokeStyle = 'rgba(190,185,215,0.5)';
+      ctx.lineWidth = 2;
+      const ha = Math.atan2(tipY - f.y, tipX - f.x);
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(ha) * f.r * 0.3, Math.sin(ha) * f.r * 0.3 + f.r * 0.2);
+      ctx.lineTo(Math.cos(ha) * f.r * 0.95, Math.sin(ha) * f.r * 0.95 + f.r * 0.1);
+      ctx.stroke();
+      ctx.restore();
+      glow(f.x, f.y, f.r * 2.4, [60, 55, 90], [40, 36, 70], 0.3);
+    } else if (f.kind === 'dragon') {
+      const flapD = Math.sin(t * 5.2 + f.phase);
+      const face2 = Math.atan2(f.vy, f.vx);
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(face2);
+      ctx.globalCompositeOperation = 'source-over';
+      // wings
+      for (const s of [-1, 1]) {
+        ctx.save();
+        ctx.rotate(s * (0.5 + flapD * 0.45));
+        const wg = ctx.createLinearGradient(0, 0, -f.r * 0.4, s * f.r * 1.7);
+        wg.addColorStop(0, 'rgba(120,36,36,0.95)');
+        wg.addColorStop(1, 'rgba(60,14,20,0.75)');
+        ctx.fillStyle = wg;
+        ctx.beginPath();
+        ctx.moveTo(-f.r * 0.1, 0);
+        ctx.quadraticCurveTo(-f.r * 0.7, s * f.r * 1.3, -f.r * 0.1, s * f.r * 1.75);
+        ctx.quadraticCurveTo(f.r * 0.25, s * f.r * 0.9, f.r * 0.2, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      // body + tail
+      ctx.fillStyle = 'rgba(146,46,40,0.97)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, f.r * 0.72, f.r * 0.42, 0, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(146,46,40,0.9)';
+      ctx.lineWidth = f.r * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(-f.r * 0.6, 0);
+      ctx.quadraticCurveTo(-f.r * 1.1, Math.sin(t * 5) * f.r * 0.3, -f.r * 1.5, Math.sin(t * 5) * f.r * 0.5);
+      ctx.stroke();
+      // head
+      ctx.fillStyle = 'rgba(168,56,44,1)';
+      ctx.beginPath();
+      ctx.ellipse(f.r * 0.78, 0, f.r * 0.3, f.r * 0.22, 0, 0, TAU);
+      ctx.fill();
+      // horns
+      ctx.strokeStyle = 'rgba(240,210,170,0.9)';
+      ctx.lineWidth = 2;
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(f.r * 0.72, s * f.r * 0.14);
+        ctx.lineTo(f.r * 0.95, s * f.r * 0.4);
+        ctx.stroke();
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      // glowing maw + eye
+      const heat = 0.55 + 0.45 * Math.sin(t * 6 + f.seed);
+      glow(f.r * 1.02, 0, f.r * 0.42, WHITE[0], [255, 146, 56], 0.5 + heat * 0.35);
+      ctx.fillStyle = rgba([255, 230, 120], 0.95);
+      ctx.beginPath();
+      ctx.arc(f.r * 0.82, -f.r * 0.08, f.r * 0.07, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+      glow(f.x, f.y, f.r * 1.9, f.hurt > 0.05 ? WHITE[0] : [255, 120, 60], [180, 50, 40], 0.3);
+    } else if (f.kind === 'elder') {
+      // dark elder: ragged double wings + rune ring
+      for (const s of [-1, 1]) {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(face + s * (1.05 - flap * 0.45));
+        ctx.fillStyle = rgba(f.c, 0.3);
+        ctx.beginPath(); ctx.ellipse(0, -14 * sc, 7 * sc, 16 * sc, 0.2, 0, TAU); ctx.fill();
+        ctx.fillStyle = rgba(f.c, 0.22);
+        ctx.beginPath(); ctx.ellipse(0, -8 * sc, 5 * sc, 11 * sc, 0.5, 0, TAU); ctx.fill();
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(t * 1.3 + f.seed);
+      ctx.strokeStyle = rgba(f.c, 0.75);
+      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(0, 0, f.r * 1.5, 0, TAU); ctx.stroke();
+      for (let i = 0; i < 6; i++) {
+        const a = i * TAU / 6;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * f.r * 1.5, Math.sin(a) * f.r * 1.5);
+        ctx.lineTo(Math.cos(a) * f.r * 1.9, Math.sin(a) * f.r * 1.9);
+        ctx.stroke();
+      }
+      ctx.restore();
+      glow(f.x, f.y, f.r * 2.6, hurtC, f.c, 0.4);
+      glow(f.x, f.y, f.r * 0.85, hurtC, f.c, 0.95);
+    } else if (f.kind === 'thorn') {
+      // spiky aggressive fairy
+      for (const s of [-1, 1]) {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(face + s * (0.9 - flap * 0.6));
+        ctx.fillStyle = rgba(f.c, 0.34);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-4 * sc, -16 * sc);
+        ctx.lineTo(2 * sc, -11 * sc);
+        ctx.lineTo(7 * sc, -17 * sc);
+        ctx.lineTo(5 * sc, -5 * sc);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(face + Math.sin(t * 7 + f.seed) * 0.2);
+      ctx.strokeStyle = rgba(hurtC, 0.9);
+      ctx.lineWidth = 2;
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(4 * sc, s * 3 * sc);
+        ctx.lineTo(12 * sc, s * 7 * sc);
+        ctx.stroke();
+      }
+      ctx.restore();
+      glow(f.x, f.y, f.r * 2.3, hurtC, f.c, 0.36);
+      glow(f.x, f.y, f.r * 0.85, hurtC, f.c, 0.92);
+    } else {
+      for (const s of [-1, 1]) {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(face + s * (0.95 - flap * 0.5));
+        ctx.fillStyle = rgba(f.c, 0.28);
+        ctx.beginPath(); ctx.ellipse(0, -11, 5.5, 12, 0.25, 0, TAU); ctx.fill();
+        ctx.fillStyle = rgba(WHITE[0], 0.55);
+        ctx.beginPath(); ctx.ellipse(0, -11, 4, 9.5, 0.25, 0, TAU); ctx.fill();
+        ctx.restore();
+      }
+      glow(f.x, f.y, f.r * 2.2, hurtC, f.c, 0.32);
+      glow(f.x, f.y, f.r * 0.9, hurtC, f.c, 0.9);
+    }
+
+    star4(f.x + Math.sin(t * 3 + f.seed) * 5, f.y - 9 + Math.cos(t * 2.4 + f.seed) * 3,
+      2.4, t * 2.2, WHITE[0], 0.75);
+
+    // hp pips for tough fairies
+    if (f.maxHp > 1) {
+      const hp = Math.max(0, Math.ceil(f.hp));
+      const wdt = f.maxHp * 7;
+      for (let i = 0; i < f.maxHp; i++) {
+        ctx.fillStyle = i < hp ? rgba(f.c, 0.95) : rgba(WHITE[0], 0.18);
+        ctx.fillRect(f.x - wdt / 2 + i * 7, f.y - f.r - 13, 5, 3);
+      }
+    }
+  }
+
+  function drawTornado(tn, t) {
+    ctx.save();
+    ctx.translate(tn.x, tn.y);
+    const c = SPELLS.wind.c;
+    const fade = spell === 'wind' ? clamp(spellT / 1.2, 0, 1) : 0;
+    for (let i = 0; i < 11; i++) {
+      const p = i / 10;
+      const rr = tn.r * (0.18 + p * 0.95);
+      const a = tn.rot * (1 + p * 0.8) + p * 3.4;
+      ctx.strokeStyle = rgba(c, (0.3 - p * 0.2) * fade);
+      ctx.lineWidth = 2.5 - p * 1.6;
+      ctx.beginPath();
+      ctx.ellipse(Math.cos(a) * 9 * p, Math.sin(a) * 6 * p - p * 6, rr, rr * 0.42, a * 0.3, 0, TAU);
+      ctx.stroke();
+    }
+    glow(0, 0, tn.r * 0.75, WHITE[0], c, 0.16 * fade);
+    ctx.restore();
+  }
+
+  function drawDrop(d, t) {
+    const bob = Math.sin(t * 3 + d.seed) * 3;
+    const blink = d.age > d.life - 3 ? (Math.sin(t * 18) * 0.5 + 0.5) * 0.6 + 0.4 : 1;
+    glow(d.x, d.y + bob, 30, WHITE[0], d.c, 0.45 * blink);
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = blink;
+    ctx.font = '19px system-ui, "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(d.icon, d.x, d.y + bob + 1);
+    ctx.restore();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = rgba(d.c, 0.6 * blink);
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(d.x, d.y + bob, 18 + Math.sin(t * 4 + d.seed) * 1.6, 0, TAU);
+    ctx.stroke();
+  }
+
+  function drawBolt(b, t) {
+    glow(b.x, b.y, b.r * 2.6, WHITE[0], b.c, 0.38 + b.p * 0.28);
+    star4(b.x, b.y, b.r * (0.85 + 0.15 * Math.sin(t * 22)), t * 7, b.c, 0.95);
+  }
+
   // ---- main loop
   let last = performance.now();
   let orbTimer = 0, idleTimer = 0;
@@ -332,6 +1507,7 @@
     last = now;
     if (dt > 0.033) dt = 0.033;
     const t = now / 1000;
+    if (paused) dt = 0;          // frozen world, wand still rendered
 
     // spring toward cursor
     const k = 160, d = 16;
@@ -354,27 +1530,34 @@
 
     kickA *= Math.exp(-6 * dt);
     flash *= Math.exp(-3.4 * dt);
+    hurtFlash *= Math.exp(-2.4 * dt);
+    shake *= Math.exp(-4.6 * dt);
+    biteCd = Math.max(0, biteCd - dt);
+    cvs.style.transform = shake > 0.05
+      ? `translate(${rand(-shake, shake).toFixed(1)}px, ${rand(-shake, shake).toFixed(1)}px)`
+      : '';
 
     // wand pose
     if (charging) charge = Math.min(1, charge + dt / 1.0);
+    if (wheelAngle > 1e5 || wheelAngle < -1e5) wheelAngle %= 360;
     const shiver = charge > 0.92 ? Math.sin(t * 80) * 1.4 : 0;
     const buttX = P.x - dirX * 18 + shiver;
     const buttY = P.y - dirY * 18 + shiver;
-    tipX = buttX + dirX * 96;
-    tipY = buttY + dirY * 96;
+    const aimRad = (BASE_ANGLE + wheelAngle) * Math.PI / 180;
+    const cA = Math.cos(aimRad), sA = Math.sin(aimRad);
+    tipX = buttX + cA * 96;
+    tipY = buttY + sA * 96;
 
-    const wobAmp = clamp(speed / 1400, 0, 1) * 5 + 1.6;
-    let ang = Math.atan2(dirY, dirX) * 180 / Math.PI
-      + Math.sin(t * 9) * wobAmp
-      + Math.sin(t * 1.7) * 2.5
-      + kickA;
+    updateHotButton();   // wand tip acts as the UI pointer
+
+    let ang = aimRad * 180 / Math.PI + kickA;
     const scale = 1 + charge * 0.09;
 
     wandEl.style.transform =
       `translate3d(${(buttX - 10).toFixed(2)}px, ${(buttY - 50).toFixed(2)}px, 0) rotate(${ang.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
 
     // ---- emit while moving: the wand casts as you wave it
-    const perpX = -dirY, perpY = dirX;
+    const perpX = -sA, perpY = cA;
     const emitK = (hasPointer ? 1 : 0) * reduceMotion;
     if (speed > 18) {
       let nF = speed * dt * 0.24 * emitK;
@@ -383,10 +1566,10 @@
       for (let i = 0; i < n; i++) {
         const j = rand(-12, 12);
         emitDust(
-          tipX + perpX * j + dirX * rand(-6, 4),
-          tipY + perpY * j + dirY * rand(-6, 4),
-          -dirX * rand(20, 80) + perpX * rand(-45, 45) + V.x * 0.12 + rand(-25, 25),
-          -dirY * rand(20, 80) + perpY * rand(-45, 45) + V.y * 0.12 + rand(-25, 25),
+          tipX + perpX * j + cA * rand(-6, 4),
+          tipY + perpY * j + sA * rand(-6, 4),
+          -cA * rand(20, 80) + perpX * rand(-45, 45) + V.x * 0.12 + rand(-25, 25),
+          -sA * rand(20, 80) + perpY * rand(-45, 45) + V.y * 0.12 + rand(-25, 25),
           rand(0.8, 2.4), rand(0.5, 1.35), pick(PALETTE)
         );
       }
@@ -395,7 +1578,7 @@
         travel = 0;
         const j = rand(-9, 9), back = rand(0, 42);
         const r = Math.random() < 0.16 ? rand(6, 10) : rand(2.2, 4.6);
-        emitStar(tipX - dirX * back + perpX * j, tipY - dirY * back + perpY * j, r);
+        emitStar(tipX - cA * back + perpX * j, tipY - sA * back + perpY * j, r);
       }
       if (trail.length < 90) trail.push({ x: tipX, y: tipY, age: 0, life: 0.45 });
     }
@@ -404,6 +1587,35 @@
       idleTimer = 0;
       emitStar(tipX + rand(-10, 10), tipY + rand(-10, 10), rand(1.6, 3.2));
     }
+
+    // epic charge visuals: runic rings, gathering motes, crackling power
+    if (charging && charge > 0.12) {
+      const cc = SPELLS[spell].c;
+      const lvl = charge;
+      // inrushing motes from a wide radius
+      for (let i = 0; i < Math.ceil(4 * lvl * reduceMotion); i++) {
+        const a = rand(0, TAU), rr = rand(120, 260) * (1 + lvl);
+        emitDust(tipX + Math.cos(a) * rr, tipY + Math.sin(a) * rr,
+          -Math.cos(a) * rr * 2.4, -Math.sin(a) * rr * 2.4,
+          rand(1, 2.6), rand(0.25, 0.5), Math.random() < 0.4 ? WHITE[0] : cc);
+      }
+      if (lvl > 0.45 && Math.random() < 0.3)
+        emitStar(tipX + rand(-26, 26), tipY + rand(-26, 26), rand(3, 7 * lvl), 0, 0, cc);
+      // crackles at high charge
+      if (lvl > 0.75 && Math.random() < 0.25) {
+        const a = rand(0, TAU), rr = 46 + 44 * lvl;
+        zaps.push({
+          pts: [[tipX, tipY], [tipX + Math.cos(a) * rr, tipY + Math.sin(a) * rr]],
+          age: 0, life: 0.14, c: lvl > 0.95 ? GOLD[0] : cc
+        });
+      }
+      if (lvl >= 0.999 && !chargeFull) {
+        chargeFull = true;
+        rings.push({ x: tipX, y: tipY, age: 0, life: 0.5, maxR: 150, c: GOLD[0], w: 4 });
+        spawnSeal(tipX, tipY, 0.8);
+      }
+    }
+    if (!charging) chargeFull = false;
 
     // charge spiral
     if (charging) {
@@ -467,6 +1679,240 @@
       }
     }
 
+    // spell timer
+    if (spell !== 'arcane') {
+      spellT -= dt;
+      spellBar.style.width = Math.max(0, (spellT / SPELLS[spell].dur) * 100).toFixed(1) + '%';
+      if (spellT <= 0 || (spell === 'shield' && shieldHP <= 0)) {
+        setSpell('arcane'); toast('Заклинание развеялось');
+      }
+    }
+    if (empowered > 0) {
+      empowered -= dt;
+      spellEl.classList.toggle('emp', empowered > 0);
+      if (empowered <= 0) { spellEl.classList.remove('emp'); toast('Усиление спало'); }
+    }
+    shieldFlash *= Math.exp(-3 * dt);
+    for (let i = zaps.length - 1; i >= 0; i--) {
+      zaps[i].age += dt;
+      if (zaps[i].age >= zaps[i].life) zaps.splice(i, 1);
+    }
+
+    // enemy fireballs (dragons)
+    for (let i = ebolts.length - 1; i >= 0; i--) {
+      const b = ebolts[i];
+      b.age += dt;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      emitDust(b.x, b.y, rand(-40, 40), rand(-50, 10), rand(1, 2.6), rand(0.2, 0.5),
+        Math.random() < 0.5 ? [255, 146, 56] : GOLD[0]);
+      if (segDist(b.x, b.y, buttX, buttY, tipX, tipY) < 16 + b.r) {
+        explode(b.x, b.y, 70, 0, [255, 146, 56]);
+        if (!gameOver) bitePixie({ x: b.x, y: b.y, vx: 0, vy: 0 });
+        ebolts.splice(i, 1);
+        continue;
+      }
+      if (b.age > 3.4 || b.x < -80 || b.x > W + 80 || b.y < -80 || b.y > H + 80) ebolts.splice(i, 1);
+    }
+    if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.classList.remove('show'); }
+
+    // water jet while holding
+    if (charging && spell === 'water' && !gameOver) waterJet(dt, t);
+
+    // tornado ally
+    if (tornado) {
+      tornado.age += dt;
+      tornado.rot += dt * 3.4;
+      const lag = 1 - Math.exp(-2.2 * dt);
+      tornado.x += (tipX + Math.cos(t * 0.8) * 90 - tornado.x) * lag;
+      tornado.y += (tipY + Math.sin(t * 0.8) * 70 - tornado.y) * lag;
+      for (let i = pixies.length - 1; i >= 0; i--) {
+        const f = pixies[i];
+        const dx = tornado.x - f.x, dy = tornado.y - f.y;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d < tornado.r) {
+          const pull = (1 - d / tornado.r) * 1500;
+          f.vx += (dx / d) * pull * dt - (dy / d) * pull * 1.3 * dt;
+          f.vy += (dy / d) * pull * dt + (dx / d) * pull * 1.3 * dt;
+          if (d < 68) { if (damagePixie(i, 3.1 * dt, SPELLS.wind.c)) continue; }
+        }
+      }
+      for (let i = 0; i < 3 * reduceMotion; i++) {
+        const a = rand(0, TAU), rr = rand(20, tornado.r * 0.85);
+        emitDust(tornado.x + Math.cos(a) * rr, tornado.y + Math.sin(a) * rr,
+          -Math.sin(a) * rr * 3, Math.cos(a) * rr * 3 - 60,
+          rand(0.8, 2.2), rand(0.3, 0.7), Math.random() < 0.4 ? WHITE[0] : SPELLS.wind.c);
+      }
+      if (spell !== 'wind') tornado = null;
+    }
+
+    // drops float, magnetize to the wand, expire
+    for (let i = drops.length - 1; i >= 0; i--) {
+      const d = drops[i];
+      d.age += dt;
+      const dx = tipX - d.x, dy = tipY - d.y;
+      const dd = Math.hypot(dx, dy) || 1;
+      if (dd < 190) { d.vx += (dx / dd) * 620 * dt; d.vy += (dy / dd) * 620 * dt; }
+      else { d.vy += 10 * dt; }
+      d.vx *= Math.exp(-1.4 * dt); d.vy *= Math.exp(-1.4 * dt);
+      d.x += d.vx * dt; d.y += d.vy * dt + Math.sin(t * 2.5 + d.seed) * 8 * dt;
+      d.x = clamp(d.x, 24, W - 24); d.y = clamp(d.y, 24, H - 24);
+      if (Math.random() < 0.5)
+        emitDust(d.x + rand(-7, 7), d.y + rand(-7, 7), rand(-14, 14), rand(-26, -4),
+          rand(0.6, 1.5), rand(0.3, 0.7), d.c);
+      if (dd < 36 || segDist(d.x, d.y, buttX, buttY, tipX, tipY) < 26) {
+        takeDrop(d); drops.splice(i, 1); continue;
+      }
+      if (d.age > d.life) drops.splice(i, 1);
+    }
+
+    // pixie spawner
+    if (!gameOver && running) {
+      if (score >= 500 && !bossSpawned) spawnQueen();
+      pixieTimer -= dt;
+      if (pixieTimer <= 0) {
+        pixieTimer = spawnDelay();
+        if (pixies.length < maxPixies()) spawnPixie();
+      }
+    }
+    // boss HUD + attacks
+    if (boss) {
+      if (boss.hp <= 0) { boss = null; bossbar.classList.add('hidden'); }
+      else {
+        const pct = clamp(boss.hp / boss.maxHp, 0, 1);
+        bossHpBar.style.width = (pct * 100).toFixed(1) + '%';
+        bossHpTxt.textContent = Math.ceil(pct * 100) + '%';
+        if (!gameOver) {
+          boss.atk -= dt; boss.summon -= dt;
+          const rage = pct < 0.45 ? 1.7 : 1;
+          if (boss.atk <= 0) {
+            boss.atk = rand(1.5, 2.6) / rage;
+            const base = Math.atan2(tipY - boss.y, tipX - boss.x);
+            const n = pct < 0.45 ? 9 : 6;
+            for (let i = 0; i < n; i++) {
+              const a = base + (i - (n - 1) / 2) * 0.17;
+              ebolts.push({ x: boss.x, y: boss.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300, r: 10, age: 0 });
+            }
+            shake = Math.max(shake, 6);
+          }
+          if (boss.summon <= 0 && pixies.length < 14) {
+            boss.summon = rand(5, 8) / rage;
+            for (let i = 0; i < 3; i++) spawnPixie();
+            toast('Королева зовёт свиту!');
+          }
+        }
+      }
+    }
+    // pixies hunt the wand — and bite it; they still dodge bolts
+    for (const f of pixies) {
+      f.age += dt;
+      f.flee = Math.max(0, (f.flee || 0) - dt);
+      f.hurt = Math.max(0, (f.hurt || 0) - dt * 2.4);
+      const tdx = tipX - f.x, tdy = tipY - f.y;
+      const dist = Math.hypot(tdx, tdy) || 1;
+      const fleeing = f.flee > 0 || gameOver;
+      let dAngle, dSpd;
+      if (fleeing) {
+        dAngle = Math.atan2(-tdy, -tdx);
+        dSpd = 250;
+      } else {
+        const wob = Math.sin(t * 3.1 + f.seed) * 0.5 + Math.sin(t * 6.7 + f.seed * 2) * 0.3;
+        dAngle = Math.atan2(tdy, tdx) + wob;
+        dSpd = f.spd * (dist < 230 ? 1.8 : 1) * (dist < 80 ? 1.5 : 1);
+      }
+      const bl = Math.min(1, 4 * dt);
+      f.vx += (Math.cos(dAngle) * dSpd - f.vx) * bl;
+      f.vy += (Math.sin(dAngle) * dSpd - f.vy) * bl;
+      const mg = f.kind === 'queen' ? 110 : 40;
+      if (f.x < mg) f.vx += (mg - f.x) * 9 * dt;
+      if (f.x > W - mg) f.vx -= (f.x - (W - mg)) * 9 * dt;
+      if (f.y < mg) f.vy += (mg - f.y) * 9 * dt;
+      if (f.y > H - mg) f.vy -= (f.y - (H - mg)) * 9 * dt;
+      for (const b of bolts) {
+        const bdx = f.x - b.x, bdy = f.y - b.y;
+        const bd = Math.hypot(bdx, bdy);
+        if (bd < 170 && bd > 0.1) {
+          f.vx += (bdx / bd) * 900 * dt;
+          f.vy += (bdy / bd) * 900 * dt;
+        }
+      }
+      const vm = Math.hypot(f.vx, f.vy);
+      if (vm > 300) { f.vx *= 300 / vm; f.vy *= 300 / vm; }
+      f.x += f.vx * dt; f.y += f.vy * dt;
+      f.tw -= dt;
+      if (f.tw <= 0) {
+        f.tw = rand(0.1, 0.24);
+        emitDust(f.x + rand(-6, 6), f.y + rand(-6, 6),
+          -f.vx * 0.08 + rand(-15, 15), -f.vy * 0.08 + rand(-22, 4),
+          rand(0.6, 1.6), rand(0.4, 0.9), f.c);
+      }
+      // dragons breathe fire from afar
+      if (f.kind === 'dragon' && !fleeing && !gameOver) {
+        f.atk = (f.atk || rand(1.5, 3)) - dt;
+        if (f.atk <= 0) {
+          f.atk = rand(2.6, 4.4);
+          const a = Math.atan2(tipY - f.y, tipX - f.x) + rand(-0.09, 0.09);
+          ebolts.push({ x: f.x, y: f.y, vx: Math.cos(a) * 330, vy: Math.sin(a) * 330, r: 11, age: 0 });
+          for (let k = 0; k < 14; k++)
+            emitDust(f.x, f.y, Math.cos(a) * rand(80, 260), Math.sin(a) * rand(80, 260),
+              rand(1, 2.6), rand(0.3, 0.7), [255, 146, 56]);
+        }
+      }
+      // thestrals: bony winged horses that charge in bursts
+      if (f.kind === 'thestral' && !fleeing && !gameOver) {
+        f.dash = (f.dash || rand(1.5, 3)) - dt;
+        if (f.dash <= 0) {
+          f.dash = rand(2.4, 4);
+          const a = Math.atan2(tipY - f.y, tipX - f.x);
+          f.vx += Math.cos(a) * 620; f.vy += Math.sin(a) * 620;
+          for (let k = 0; k < 14; k++)
+            emitDust(f.x, f.y, rand(-120, 120), rand(-120, 120), rand(1, 2.6), rand(0.3, 0.8), [170, 180, 205]);
+        }
+      }
+      // dementors chill the air around them
+      if (f.kind === 'dementor' && Math.random() < 0.5) {
+        emitDust(f.x + rand(-22, 22), f.y + rand(-14, 26), rand(-18, 18), rand(10, 50),
+          rand(1.4, 3.4), rand(0.5, 1.1), [86, 82, 120]);
+      }
+
+      // contact: shield blocks early, otherwise the wand is bitten
+      const reach = shieldHP > 0 ? 92 : f.r + 9;
+      const touching = shieldHP > 0
+        ? Math.hypot(f.x - tipX, f.y - tipY) < reach
+        : segDist(f.x, f.y, buttX, buttY, tipX, tipY) < reach;
+      if (!fleeing && !gameOver && biteCd <= 0 && touching) bitePixie(f);
+    }
+    // bolt flight + hits
+    for (let i = bolts.length - 1; i >= 0; i--) {
+      const b = bolts[i];
+      b.age += dt;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      if (Math.random() < reduceMotion)
+        emitDust(b.x - b.vx * dt * 0.6, b.y - b.vy * dt * 0.6,
+          -b.vx * 0.04 + rand(-26, 26), -b.vy * 0.04 + rand(-26, 26),
+          rand(0.8, 2) * (0.6 + b.p), rand(0.25, 0.55), b.c);
+      let hit = -1;
+      for (let j = 0; j < pixies.length; j++) {
+        const f = pixies[j];
+        if (Math.hypot(f.x - b.x, f.y - b.y) < f.r + b.r) { hit = j; break; }
+      }
+      if (hit >= 0) {
+        if (b.kind === 'fire') {
+          explode(b.x, b.y, b.boom, b.dmg, b.c);
+        } else {
+          const f = pixies[hit];
+          if (b.push) {
+            const a = Math.atan2(b.vy, b.vx);
+            f.vx += Math.cos(a) * b.push; f.vy += Math.sin(a) * b.push;
+          }
+          damagePixie(hit, b.dmg || 1, b.c);
+        }
+        bolts.splice(i, 1);
+        continue;
+      }
+      if (b.age > b.life || b.x < -90 || b.x > W + 90 || b.y < -90 || b.y > H + 90)
+        bolts.splice(i, 1);
+    }
+
     // ---- render
 
     // trail ribbon
@@ -481,6 +1927,79 @@
 
     // magic seals
     for (const s of seals) drawSeal(s, s.age / s.life);
+
+    // tornado ally, pixies, bolts, drops
+    if (tornado) drawTornado(tornado, t);
+    for (const f of pixies) drawPixie(f, t);
+    for (const b of bolts) drawBolt(b, t);
+    for (const b of ebolts) {
+      glow(b.x, b.y, b.r * 3, WHITE[0], [255, 146, 56], 0.55);
+      ctx.fillStyle = rgba(GOLD[0], 0.95);
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.6, 0, TAU); ctx.fill();
+    }
+    for (const d of drops) drawDrop(d, t);
+
+    // lightning arcs
+    for (const z of zaps) {
+      const lf = 1 - z.age / z.life;
+      for (let pass = 0; pass < 2; pass++) {
+        ctx.strokeStyle = pass ? rgba(WHITE[0], lf * 0.95) : rgba(z.c, lf * 0.55);
+        ctx.lineWidth = pass ? 1.8 : 7;
+        ctx.beginPath();
+        for (let s = 1; s < z.pts.length; s++) {
+          const [ax, ay] = z.pts[s - 1], [bx, by] = z.pts[s];
+          const segs = 7;
+          ctx.moveTo(ax, ay);
+          for (let k = 1; k <= segs; k++) {
+            const u = k / segs;
+            const jx = (Math.random() - 0.5) * 22 * (k < segs ? 1 : 0);
+            const jy = (Math.random() - 0.5) * 22 * (k < segs ? 1 : 0);
+            ctx.lineTo(ax + (bx - ax) * u + jx, ay + (by - ay) * u + jy);
+          }
+        }
+        ctx.stroke();
+      }
+      for (const p of z.pts) glow(p[0], p[1], 34 * lf, WHITE[0], z.c, 0.5 * lf);
+    }
+
+    // shield ward around the wand
+    if (shieldHP > 0) {
+      const sc = SPELLS.shield.c;
+      const pulse = 0.55 + 0.45 * Math.sin(t * 3.2);
+      const R = 92;
+      const al = (0.18 + 0.12 * pulse + shieldFlash * 0.5);
+      ctx.strokeStyle = rgba(sc, al + 0.25);
+      ctx.lineWidth = 2 + shieldFlash * 4;
+      ctx.beginPath(); ctx.arc(tipX, tipY, R, 0, TAU); ctx.stroke();
+      glow(tipX, tipY, R, sc, sc, 0.06 + shieldFlash * 0.22);
+      // hex facets
+      ctx.strokeStyle = rgba(sc, al * 0.7);
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 6; i++) {
+        const a = t * 0.6 + i * TAU / 6;
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, R, a, a + 0.42);
+        ctx.stroke();
+      }
+      for (let i = 0; i < shieldHP; i++) {
+        const a = -Math.PI / 2 + t * 1.1 + i * TAU / Math.max(3, shieldHP);
+        star4(tipX + Math.cos(a) * R, tipY + Math.sin(a) * R, 5, t * 3, sc, 0.9);
+      }
+    }
+
+    // targeting reticle when the tip hovers a button
+    if (hotBtn) {
+      const pr = 16 + Math.sin(t * 6) * 3;
+      ctx.strokeStyle = rgba(GOLD[0], 0.85);
+      ctx.lineWidth = 1.6;
+      for (let i = 0; i < 4; i++) {
+        const a = t * 1.8 + i * TAU / 4;
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, pr, a, a + 0.6);
+        ctx.stroke();
+      }
+      glow(tipX, tipY, pr * 2.2, WHITE[0], GOLD[1], 0.3);
+    }
 
     // tip glow
     const gR = 24 + clamp(speed * 0.05, 0, 40) + charge * 42 + flash * 200 + Math.sin(t * 5) * 2;
@@ -533,13 +2052,21 @@
     }
 
     ctx.globalCompositeOperation = 'source-over';
+    if (hurtFlash > 0.02) {
+      const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.22, W / 2, H / 2, Math.max(W, H) * 0.72);
+      vg.addColorStop(0, 'rgba(244, 63, 94, 0)');
+      vg.addColorStop(1, `rgba(244, 63, 94, ${(hurtFlash * 0.22).toFixed(3)})`);
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
+    }
     requestAnimationFrame(frame);
   }
 
   requestAnimationFrame(frame);
 
-  // welcome shimmer
+  // welcome shimmer (title screen idle)
   setTimeout(() => spawnBurst(W / 2, H / 2, 0.22), 650);
+  hintEl.classList.add('gone');
 })();
 </script>
 </body>
